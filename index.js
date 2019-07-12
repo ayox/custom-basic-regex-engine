@@ -42,14 +42,54 @@ class AlternationNode extends RegexpNode {
     }
 }
 
+class AnyCharacterNode extends RegexpNode {
+    constructor(next) {
+        super();
+        this.next = next;
+    }
 
-let commonTail = new CharacterNode('d', EmptyString),
-    alternation = new AlternationNode([
-        new CharacterNode('b', commonTail),
-        new CharacterNode('c', commonTail)
-    ]),
-    head = new CharacterNode('a', alternation);
-console.log(head.derive('a')) //=> the AlternationNode in the middle
-console.log(head.derive('a').derive('b')) //=> the CharacterNode 'd'
-console.log(head.derive('a').derive('e')) //=> NeverMatches
-console.log(head.derive('a').derive('b').derive('d')) //=> EmptyString; match complete
+    derive(char) {
+        return this.next;
+    }
+}
+
+class RepetitionNode extends RegexpNode {
+    constructor(next) {
+        super();
+        // head will be set properly later by modification
+        this.head = NeverMatches;
+        this.next = next;
+    }
+
+    derive(char) {
+        return new AlternationNode([
+            this.head.derive(char),
+            this.next.derive(char),
+        ]);
+    }
+}
+
+// let commonTail = new CharacterNode('d', EmptyString),
+//     alternation = new AlternationNode([
+//         new CharacterNode('b', commonTail),
+//         new CharacterNode('c', commonTail)
+//     ]),
+//     head = new CharacterNode('a', alternation);
+// console.log(head.derive('a')) //=> the AlternationNode in the middle
+// console.log(head.derive('a').derive('b')) //=> the CharacterNode 'd'
+// console.log(head.derive('a').derive('e')) //=> NeverMatches
+// console.log(head.derive('a').derive('b').derive('d')) //=> EmptyString; match complete
+
+
+let tail = new CharacterNode('d', EmptyString),
+    repetition = new RepetitionNode(tail),
+    repetitionBody = new CharacterNode('a', new CharacterNode('b', new CharacterNode('c', repetition)));
+
+// this is the side-effectual part I mentioned which sets up the cycle
+repetition.head = repetitionBody;
+
+console.log(repetition.derive('a')); //=> the CharacterNode b
+console.log(repetition.derive('d')); //=> EmptyString; match complete
+let repeatedOnce = repetition.derive('a').derive('b').derive('c'); // => the same RepetitionNode again
+console.log(repeatedOnce.derive('a')) // => back to b
+console.log(repeatedOnce.derive('d')) // => EmptyString again
