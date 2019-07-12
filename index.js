@@ -62,10 +62,11 @@ class RepetitionNode extends RegexpNode {
     }
 
     derive(char) {
-        return new AlternationNode([
+        const result = new AlternationNode([
             this.head.derive(char),
             this.next.derive(char),
         ]);
+        return result
     }
 }
 
@@ -90,6 +91,31 @@ repetition.head = repetitionBody;
 
 console.log(repetition.derive('a')); //=> the CharacterNode b
 console.log(repetition.derive('d')); //=> EmptyString; match complete
-let repeatedOnce = repetition.derive('a').derive('b').derive('c'); // => the same RepetitionNode again
-console.log(repeatedOnce.derive('a')) // => back to b
-console.log(repeatedOnce.derive('d')) // => EmptyString again
+// let repeatedOnce = repetition.derive('a').derive('b').derive('c'); // => the same RepetitionNode again
+// console.log(repeatedOnce.derive('a')) // => back to b
+// console.log(repeatedOnce.derive('d')) // => EmptyString again
+
+
+class _Or {
+    constructor (alternatives) {
+        this.alternatives = alternatives;
+    }
+}
+function Or(alternatives) {
+    if (!(alternatives instanceof Array)) {
+        throw new TypeError("alternatives passed to Or must be an Array");
+    } else {
+        return new _Or(alternatives);
+    }
+}
+
+class _ZeroOrMore {
+    constructor (repeatable) {
+        this.repeatable = repeatable;
+    }
+}
+function ZeroOrMore(repeatable) {
+    return new _ZeroOrMore(repeatable);
+}
+
+const Any = Symbol('Any');
